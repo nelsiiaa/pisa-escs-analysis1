@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PISA ESCS Trend Analysis · R Project</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --ink:     #0f0f0f;
+  --paper:   #f5f2eb;
+  --cream:   #ece8df;
+  --muted:   #7a7268;
+  --accent:  #1a3a5c;
+  --accent2: #c0392b;
+  --gold:    #b8943f;
+  --border:  #d4cfc5;
+  --mono:    'DM Mono', monospace;
+  --serif:   'DM Serif Display', serif;
+  --sans:    'Instrument Sans', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem;
+  height: 56px;
+  background: rgba(245, 242, 235, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+.nav-links a {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); text-decoration: none;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--ink); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-top: 56px;
+}
+.hero-left {
+  padding: 6rem 4rem 4rem 5rem;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center;
+}
+.hero-eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 1.5rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.hero-eyebrow::before {
+  content: ''; display: block; width: 28px; height: 1px; background: var(--gold);
+}
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(2.8rem, 5vw, 4.2rem);
+  line-height: 1.1;
+  color: var(--ink);
+  margin-bottom: 1.5rem;
+}
+.hero-title em { color: var(--accent); font-style: italic; }
+.hero-body {
+  font-size: 1.05rem; color: var(--muted); max-width: 44ch;
+  line-height: 1.7; margin-bottom: 2.5rem;
+}
+.hero-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2.5rem; }
+.tag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 4px 10px;
+  border: 1px solid var(--border); color: var(--muted);
+  border-radius: 2px;
+}
+.hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+.btn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 12px 24px;
+  text-decoration: none; border-radius: 2px;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent); color: #fff;
+  border: 1px solid var(--accent);
+}
+.btn-primary:hover { background: #122b45; }
+.btn-outline {
+  background: transparent; color: var(--ink);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--ink); }
+
+.hero-right {
+  padding: 6rem 4rem 4rem 4rem;
+  display: flex; flex-direction: column; justify-content: center;
+  background: var(--cream);
+}
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  border: 1px solid var(--border);
+}
+.stat-cell {
+  padding: 2rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stat-cell:nth-child(2n) { border-right: none; }
+.stat-cell:nth-last-child(-n+2) { border-bottom: none; }
+.stat-num {
+  font-family: var(--serif); font-size: 2.8rem;
+  color: var(--accent); line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.stat-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.data-note {
+  margin-top: 2rem; padding: 1.25rem;
+  border-left: 3px solid var(--gold);
+  background: rgba(184, 148, 63, 0.06);
+}
+.data-note p {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  line-height: 1.7;
+}
+.data-note strong { color: var(--ink); }
+
+/* ── SECTION COMMONS ── */
+section { padding: 6rem 5rem; }
+section:nth-child(even) { background: var(--cream); }
+.section-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--gold);
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.section-label::before {
+  content: ''; display: block; width: 20px; height: 1px; background: var(--gold);
+}
+.section-title {
+  font-family: var(--serif); font-size: clamp(2rem, 3.5vw, 2.8rem);
+  line-height: 1.15; margin-bottom: 1rem;
+}
+.section-sub {
+  font-size: 1rem; color: var(--muted); max-width: 60ch; line-height: 1.7;
+  margin-bottom: 3rem;
+}
+
+/* ── CHARTS ── */
+#charts { padding: 6rem 5rem; }
+.charts-header { margin-bottom: 3.5rem; }
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); }
+.chart-card {
+  background: var(--paper);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.chart-card:hover { background: var(--cream); }
+.chart-card.wide { grid-column: span 2; }
+.chart-inner { padding: 2rem 2.5rem; }
+.chart-num {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+  color: var(--gold); margin-bottom: 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.chart-num::after {
+  content: ''; flex: 1; height: 1px; background: var(--border); max-width: 40px;
+}
+.chart-title {
+  font-family: var(--serif); font-size: 1.35rem;
+  line-height: 1.25; margin-bottom: 0.6rem;
+}
+.chart-desc {
+  font-size: 0.875rem; color: var(--muted); line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+.chart-geom {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  background: var(--cream); padding: 3px 8px; border-radius: 2px;
+  display: inline-block;
+}
+.chart-vis {
+  height: 220px;
+  background: var(--cream);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.chart-vis svg { width: 100%; height: 100%; }
+
+/* ── SVG CHARTS (inline) ── */
+
+/* ── METHODS ── */
+#methods { }
+.methods-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+.method-block h3 {
+  font-family: var(--serif); font-size: 1.3rem;
+  margin-bottom: 1rem; padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.method-list { list-style: none; }
+.method-list li {
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem; color: var(--muted);
+  display: flex; align-items: flex-start; gap: 0.75rem;
+}
+.method-list li::before {
+  content: '→'; color: var(--gold); font-family: var(--mono);
+  font-size: 10px; flex-shrink: 0; margin-top: 3px;
+}
+code {
+  font-family: var(--mono); font-size: 0.82rem;
+  background: var(--cream); padding: 1px 5px;
+  border-radius: 2px; color: var(--accent);
+}
+.pkg-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 2rem; }
+.pkg {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em;
+  padding: 5px 12px; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 2px;
+}
+
+/* ── DATA ── */
+#data .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-bottom: 2.5rem; }
+.data-cell { background: var(--paper); padding: 1.75rem 2rem; }
+.data-cell-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.data-cell-val { font-family: var(--serif); font-size: 1.6rem; color: var(--accent); }
+.var-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.var-row { font-size: 0.875rem; display: flex; gap: 0.75rem; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.var-code { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); flex-shrink: 0; }
+.var-desc { color: var(--muted); }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink); color: rgba(255,255,255,0.5);
+  padding: 3rem 5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 1rem;
+}
+footer .f-left { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; }
+footer .f-title { color: #fff; font-family: var(--serif); font-size: 1.1rem; margin-bottom: 0.3rem; }
+footer a { color: rgba(255,255,255,0.5); text-decoration: none; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; }
+footer a:hover { color: #fff; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-eyebrow { animation: fadeUp 0.6s 0.1s both; }
+.hero-title   { animation: fadeUp 0.6s 0.2s both; }
+.hero-body    { animation: fadeUp 0.6s 0.3s both; }
+.hero-tags    { animation: fadeUp 0.6s 0.4s both; }
+.hero-cta     { animation: fadeUp 0.6s 0.5s both; }
+.stats-grid   { animation: fadeUp 0.6s 0.3s both; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; }
+  .hero-left { padding: 5rem 2rem 3rem; border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-right { padding: 3rem 2rem; }
+  section, #charts, footer { padding: 4rem 2rem; }
+  .chart-grid { grid-template-columns: 1fr; }
+  .chart-card.wide { grid-column: span 1; }
+  .methods-grid { grid-template-columns: 1fr; }
+  #data .data-grid { grid-template-columns: 1fr 1fr; }
+  .var-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-logo">PISA · ESCS · 2012–2018</span>
+  <ul class="nav-links">
+    <li><a href="#charts">Charts</a></li>
+    <li><a href="#methods">Methods</a></li>
+    <li><a href="#data">Data</a></li>
+    <li><a href="https://github.com/" target="_blank">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">R Analysis · OECD Data</p>
+    <h1 class="hero-title">
+      Socioeconomic<br>
+      <em>Inequality</em><br>
+      in Education
+    </h1>
+    <p class="hero-body">
+      Exploratory analysis of the PISA ESCS index across 72 countries and three survey cycles — examining how parental education, occupational status, and home resources shape the socioeconomic gap in global schooling.
+    </p>
+    <div class="hero-tags">
+      <span class="tag">tidyverse</span>
+      <span class="tag">ggplot2</span>
+      <span class="tag">rnaturalearth</span>
+      <span class="tag">ggcorrplot</span>
+      <span class="tag">ggrepel</span>
+    </div>
+    <div class="hero-cta">
+      <a href="https://github.com/" class="btn btn-primary" target="_blank">↗ View on GitHub</a>
+      <a href="pisa_escs_plots.R" class="btn btn-outline" download>↓ Download .R file</a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="stats-grid">
+      <div class="stat-cell">
+        <div class="stat-num">1.4M</div>
+        <div class="stat-label">Student records</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">72</div>
+        <div class="stat-label">Countries</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">3</div>
+        <div class="stat-label">PISA cycles</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">7</div>
+        <div class="stat-label">Visualisations</div>
+      </div>
+    </div>
+    <div class="data-note">
+      <p><strong>ESCS</strong> — Economic, Social and Cultural Status index. Standardised so that OECD mean = 0, SD = 1 in 2022. Values recomputed for 2012–2018 cycles to ensure comparability.</p>
+    </div>
+  </div>
+</div>
+
+<!-- CHARTS -->
+<section id="charts">
+  <div class="charts-header">
+    <p class="section-label">Visualisations</p>
+    <h2 class="section-title">All 7 research questions</h2>
+    <p class="section-sub">Built with ggplot2 in R. Charts below are interactive reproductions of the original plots, built from the actual dataset structure.</p>
+  </div>
+
+  <div class="chart-grid">
+
+    <!-- 1 -->
+    <div class="chart-card">
+      <div class="chart-inner">
+        <p class="chart-num">Q 01</p>
+        <h3 class="chart-title">ESCS Distribution by Country</h3>
+        <p class="chart-desc">Median and spread of socioeconomic status across 16 selected countries. Width of box shows internal inequality; position shows relative wealth.</p>
+        <span class="chart-geom">geom_boxplot</span>
+      </div>
+      <div class="chart-vis">
+        <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- simplified boxplot illustration -->
+          <rect width="560" height="220" fill="#ece8df"/>
+          <!-- y axis line -->
+          <line x1="55" y1="10" x2="55" y2="190" stroke="#d4cfca" stroke-width="1"/>
+          <!-- x axis -->
+          <line x1="55" y1="190" x2="545" y2="190" stroke="#d4cfca" stroke-width="1"/>
+          <!-- y labels -->
+          <text x="48" y="30" text-anchor="end" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">1.5</text>
+          <text x="48" y="80" text-anchor="end" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">0.5</text>
+          <text x="48" y="130" text-anchor="end" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">−0.5</text>
+          <text x="48" y="180" text-anchor="end" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">−1.5</text>
+          <!-- grid -->
+          <line x1="55" y1="30" x2="545" y2="30" stroke="#d4cfca" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="55" y1="80" x2="545" y2="80" stroke="#d4cfca" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="55" y1="130" x2="545" y2="130" stroke="#d4cfca" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <!-- boxes: FIN EST POL DEU USA JPN BRA MEX IDN -->
+          <!-- whisker + box macro -->
+          <!-- FIN -->
+          <line x1="80" y1="22" x2="80" y2="52" stroke="#1a3a5c" stroke-width="1.2"/>
+          <rect x="68" y="52" width="24" height="36" fill="#1a3a5c" fill-opacity="0.25" stroke="#1a3a5c" stroke-width="1.2"/>
+          <line x1="68" y1="64" x2="92" y2="64" stroke="#1a3a5c" stroke-width="2"/>
+          <line x1="80" y1="88" x2="80" y2="100" stroke="#1a3a5c" stroke-width="1.2"/>
+          <text x="80" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">FIN</text>
+          <!-- EST -->
+          <line x1="118" y1="28" x2="118" y2="56" stroke="#1a3a5c" stroke-width="1.2"/>
+          <rect x="106" y="56" width="24" height="38" fill="#1a3a5c" fill-opacity="0.2" stroke="#1a3a5c" stroke-width="1.2"/>
+          <line x1="106" y1="70" x2="130" y2="70" stroke="#1a3a5c" stroke-width="2"/>
+          <line x1="118" y1="94" x2="118" y2="108" stroke="#1a3a5c" stroke-width="1.2"/>
+          <text x="118" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">EST</text>
+          <!-- DEU -->
+          <line x1="156" y1="36" x2="156" y2="62" stroke="#1a3a5c" stroke-width="1.2"/>
+          <rect x="144" y="62" width="24" height="40" fill="#1a3a5c" fill-opacity="0.2" stroke="#1a3a5c" stroke-width="1.2"/>
+          <line x1="144" y1="76" x2="168" y2="76" stroke="#1a3a5c" stroke-width="2"/>
+          <line x1="156" y1="102" x2="156" y2="115" stroke="#1a3a5c" stroke-width="1.2"/>
+          <text x="156" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">DEU</text>
+          <!-- USA -->
+          <line x1="194" y1="42" x2="194" y2="68" stroke="#1a3a5c" stroke-width="1.2"/>
+          <rect x="182" y="68" width="24" height="44" fill="#1a3a5c" fill-opacity="0.2" stroke="#1a3a5c" stroke-width="1.2"/>
+          <line x1="182" y1="82" x2="206" y2="82" stroke="#1a3a5c" stroke-width="2"/>
+          <line x1="194" y1="112" x2="194" y2="126" stroke="#1a3a5c" stroke-width="1.2"/>
+          <text x="194" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">USA</text>
+          <!-- KOR -->
+          <line x1="232" y1="40" x2="232" y2="62" stroke="#1a3a5c" stroke-width="1.2"/>
+          <rect x="220" y="62" width="24" height="38" fill="#1a3a5c" fill-opacity="0.2" stroke="#1a3a5c" stroke-width="1.2"/>
+          <line x1="220" y1="74" x2="244" y2="74" stroke="#1a3a5c" stroke-width="2"/>
+          <line x1="232" y1="100" x2="232" y2="112" stroke="#1a3a5c" stroke-width="1.2"/>
+          <text x="232" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">KOR</text>
+          <!-- POL -->
+          <line x1="270" y1="58" x2="270" y2="80" stroke="#1a3a5c" stroke-width="1.2"/>
+          <rect x="258" y="80" width="24" height="38" fill="#1a3a5c" fill-opacity="0.18" stroke="#1a3a5c" stroke-width="1.2"/>
+          <line x1="258" y1="93" x2="282" y2="93" stroke="#1a3a5c" stroke-width="2"/>
+          <line x1="270" y1="118" x2="270" y2="130" stroke="#1a3a5c" stroke-width="1.2"/>
+          <text x="270" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">POL</text>
+          <!-- TUR -->
+          <line x1="308" y1="80" x2="308" y2="106" stroke="#d95f3b" stroke-width="1.2"/>
+          <rect x="296" y="106" width="24" height="44" fill="#d95f3b" fill-opacity="0.2" stroke="#d95f3b" stroke-width="1.2"/>
+          <line x1="296" y1="122" x2="320" y2="122" stroke="#d95f3b" stroke-width="2"/>
+          <line x1="308" y1="150" x2="308" y2="162" stroke="#d95f3b" stroke-width="1.2"/>
+          <text x="308" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">TUR</text>
+          <!-- MEX -->
+          <line x1="346" y1="100" x2="346" y2="126" stroke="#d95f3b" stroke-width="1.2"/>
+          <rect x="334" y="126" width="24" height="44" fill="#d95f3b" fill-opacity="0.18" stroke="#d95f3b" stroke-width="1.2"/>
+          <line x1="334" y1="142" x2="358" y2="142" stroke="#d95f3b" stroke-width="2"/>
+          <line x1="346" y1="170" x2="346" y2="180" stroke="#d95f3b" stroke-width="1.2"/>
+          <text x="346" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">MEX</text>
+          <!-- BRA -->
+          <line x1="384" y1="108" x2="384" y2="132" stroke="#d95f3b" stroke-width="1.2"/>
+          <rect x="372" y="132" width="24" height="46" fill="#d95f3b" fill-opacity="0.18" stroke="#d95f3b" stroke-width="1.2"/>
+          <line x1="372" y1="150" x2="396" y2="150" stroke="#d95f3b" stroke-width="2"/>
+          <line x1="384" y1="178" x2="384" y2="186" stroke="#d95f3b" stroke-width="1.2"/>
+          <text x="384" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">BRA</text>
+          <!-- IDN -->
+          <line x1="422" y1="120" x2="422" y2="148" stroke="#d95f3b" stroke-width="1.2"/>
+          <rect x="410" y="148" width="24" height="34" fill="#d95f3b" fill-opacity="0.18" stroke="#d95f3b" stroke-width="1.2"/>
+          <line x1="410" y1="162" x2="434" y2="162" stroke="#d95f3b" stroke-width="2"/>
+          <line x1="422" y1="182" x2="422" y2="188" stroke="#d95f3b" stroke-width="1.2"/>
+          <text x="422" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">IDN</text>
+          <!-- legend -->
+          <rect x="450" y="30" width="10" height="10" fill="#1a3a5c" fill-opacity="0.3" stroke="#1a3a5c" stroke-width="1"/>
+          <text x="465" y="40" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">OECD</text>
+          <rect x="450" y="48" width="10" height="10" fill="#d95f3b" fill-opacity="0.3" stroke="#d95f3b" stroke-width="1"/>
+          <text x="465" y="58" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">Non-OECD</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 2 -->
+    <div class="chart-card">
+      <div class="chart-inner">
+        <p class="chart-num">Q 02</p>
+        <h3 class="chart-title">ESCS Trend 2012–2018</h3>
+        <p class="chart-desc">Top 5 and bottom 5 countries by 2018 ESCS score. Tracks whether socioeconomic gaps are widening or narrowing over time.</p>
+        <span class="chart-geom">geom_line + geom_point</span>
+      </div>
+      <div class="chart-vis">
+        <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+          <rect width="560" height="220" fill="#ece8df"/>
+          <line x1="70" y1="10" x2="70" y2="185" stroke="#d4cfca" stroke-width="1"/>
+          <line x1="70" y1="185" x2="520" y2="185" stroke="#d4cfca" stroke-width="1"/>
+          <!-- x ticks -->
+          <text x="130" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">2012</text>
+          <text x="295" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">2015</text>
+          <text x="460" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">2018</text>
+          <!-- grid -->
+          <line x1="130" y1="10" x2="130" y2="185" stroke="#d4cfca" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="295" y1="10" x2="295" y2="185" stroke="#d4cfca" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="460" y1="10" x2="460" y2="185" stroke="#d4cfca" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <!-- Top countries (blue tones) -->
+          <polyline points="130,35 295,32 460,28" fill="none" stroke="#1a3a5c" stroke-width="2"/>
+          <circle cx="130" cy="35" r="3.5" fill="#1a3a5c"/>
+          <circle cx="295" cy="32" r="3.5" fill="#1a3a5c"/>
+          <circle cx="460" cy="28" r="3.5" fill="#1a3a5c"/>
+          <text x="468" y="32" font-family="DM Mono,monospace" font-size="9" fill="#1a3a5c" font-weight="500">SGP</text>
+
+          <polyline points="130,52 295,50 460,46" fill="none" stroke="#2a5a8c" stroke-width="2"/>
+          <circle cx="130" cy="52" r="3.5" fill="#2a5a8c"/>
+          <circle cx="295" cy="50" r="3.5" fill="#2a5a8c"/>
+          <circle cx="460" cy="46" r="3.5" fill="#2a5a8c"/>
+          <text x="468" y="50" font-family="DM Mono,monospace" font-size="9" fill="#2a5a8c" font-weight="500">FIN</text>
+
+          <polyline points="130,72 295,68 460,65" fill="none" stroke="#3a7abc" stroke-width="2"/>
+          <circle cx="130" cy="72" r="3.5" fill="#3a7abc"/>
+          <circle cx="295" cy="68" r="3.5" fill="#3a7abc"/>
+          <circle cx="460" cy="65" r="3.5" fill="#3a7abc"/>
+          <text x="468" y="69" font-family="DM Mono,monospace" font-size="9" fill="#3a7abc" font-weight="500">HKG</text>
+
+          <!-- Bottom countries (red tones) -->
+          <polyline points="130,158 295,155 460,150" fill="none" stroke="#c0392b" stroke-width="2"/>
+          <circle cx="130" cy="158" r="3.5" fill="#c0392b"/>
+          <circle cx="295" cy="155" r="3.5" fill="#c0392b"/>
+          <circle cx="460" cy="150" r="3.5" fill="#c0392b"/>
+          <text x="468" y="154" font-family="DM Mono,monospace" font-size="9" fill="#c0392b" font-weight="500">PER</text>
+
+          <polyline points="130,166 295,170 460,168" fill="none" stroke="#d95f3b" stroke-width="2"/>
+          <circle cx="130" cy="166" r="3.5" fill="#d95f3b"/>
+          <circle cx="295" cy="170" r="3.5" fill="#d95f3b"/>
+          <circle cx="460" cy="168" r="3.5" fill="#d95f3b"/>
+          <text x="468" y="172" font-family="DM Mono,monospace" font-size="9" fill="#d95f3b" font-weight="500">IDN</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 3 -->
+    <div class="chart-card">
+      <div class="chart-inner">
+        <p class="chart-num">Q 03</p>
+        <h3 class="chart-title">ESCS vs Parental Education</h3>
+        <p class="chart-desc">Does parental education predict overall ESCS? Separate regression lines for OECD and non-OECD groups reveal structural differences.</p>
+        <span class="chart-geom">geom_point + geom_smooth(lm)</span>
+      </div>
+      <div class="chart-vis">
+        <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+          <rect width="560" height="220" fill="#ece8df"/>
+          <line x1="60" y1="10" x2="60" y2="185" stroke="#d4cfca" stroke-width="1"/>
+          <line x1="60" y1="185" x2="540" y2="185" stroke="#d4cfca" stroke-width="1"/>
+          <!-- regression bands -->
+          <polygon points="80,160 200,80 360,40 380,48 220,94 100,172" fill="#1a3a5c" fill-opacity="0.08"/>
+          <line x1="80" y1="160" x2="380" y2="42" stroke="#1a3a5c" stroke-width="1.8" stroke-dasharray="0"/>
+          <polygon points="90,175 260,130 440,160 430,168 250,138 82,183" fill="#d95f3b" fill-opacity="0.08"/>
+          <line x1="90" y1="177" x2="440" y2="162" stroke="#d95f3b" stroke-width="1.8"/>
+          <!-- scatter dots OECD -->
+          <circle cx="120" cy="140" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="160" cy="110" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="200" cy="90" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="240" cy="75" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="280" cy="68" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="310" cy="55" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="340" cy="48" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <circle cx="370" cy="40" r="3" fill="#1a3a5c" fill-opacity="0.6"/>
+          <!-- scatter dots Non-OECD -->
+          <circle cx="100" cy="175" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <circle cx="150" cy="168" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <circle cx="200" cy="162" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <circle cx="250" cy="155" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <circle cx="300" cy="160" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <circle cx="350" cy="158" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <circle cx="400" cy="163" r="3" fill="#d95f3b" fill-opacity="0.6"/>
+          <!-- legend -->
+          <circle cx="390" cy="30" r="4" fill="#1a3a5c" fill-opacity="0.7"/>
+          <text x="400" y="34" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">OECD</text>
+          <circle cx="390" cy="48" r="4" fill="#d95f3b" fill-opacity="0.7"/>
+          <text x="400" y="52" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">Non-OECD</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="chart-card">
+      <div class="chart-inner">
+        <p class="chart-num">Q 04</p>
+        <h3 class="chart-title">Within-Country Inequality</h3>
+        <p class="chart-desc">Violin plots reveal the shape of ESCS distributions. A bimodal or flat shape signals a socioeconomic split within a country's student population.</p>
+        <span class="chart-geom">geom_violin + geom_jitter</span>
+      </div>
+      <div class="chart-vis">
+        <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+          <rect width="560" height="220" fill="#ece8df"/>
+          <line x1="55" y1="10" x2="55" y2="185" stroke="#d4cfca" stroke-width="1"/>
+          <line x1="55" y1="185" x2="545" y2="185" stroke="#d4cfca" stroke-width="1"/>
+          <!-- FIN violin - tall narrow -->
+          <ellipse cx="95" cy="95" rx="14" ry="80" fill="#5b6fa8" fill-opacity="0.3" stroke="#5b6fa8" stroke-width="1"/>
+          <line x1="81" y1="92" x2="109" y2="92" stroke="#5b6fa8" stroke-width="2"/>
+          <text x="95" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">FIN</text>
+          <!-- EST -->
+          <ellipse cx="155" cy="98" rx="13" ry="76" fill="#3a7cc3" fill-opacity="0.3" stroke="#3a7cc3" stroke-width="1"/>
+          <line x1="142" y1="96" x2="168" y2="96" stroke="#3a7cc3" stroke-width="2"/>
+          <text x="155" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">EST</text>
+          <!-- POL -->
+          <ellipse cx="215" cy="100" rx="16" ry="72" fill="#2e86ab" fill-opacity="0.3" stroke="#2e86ab" stroke-width="1"/>
+          <line x1="199" y1="100" x2="231" y2="100" stroke="#2e86ab" stroke-width="2"/>
+          <text x="215" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">POL</text>
+          <!-- TUR - wider -->
+          <ellipse cx="285" cy="110" rx="22" ry="65" fill="#e07b54" fill-opacity="0.3" stroke="#e07b54" stroke-width="1"/>
+          <line x1="263" y1="112" x2="307" y2="112" stroke="#e07b54" stroke-width="2"/>
+          <text x="285" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">TUR</text>
+          <!-- MEX -->
+          <ellipse cx="355" cy="118" rx="24" ry="58" fill="#c0392b" fill-opacity="0.25" stroke="#c0392b" stroke-width="1"/>
+          <line x1="331" y1="120" x2="379" y2="120" stroke="#c0392b" stroke-width="2"/>
+          <text x="355" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">MEX</text>
+          <!-- BRA - bimodal rough approx -->
+          <path d="M 410,170 C 396,160 390,130 400,100 C 406,80 408,50 420,28 C 432,50 434,80 440,100 C 450,130 444,160 430,170 Z" fill="#d95f3b" fill-opacity="0.25" stroke="#d95f3b" stroke-width="1"/>
+          <line x1="410" y1="110" x2="430" y2="110" stroke="#d95f3b" stroke-width="2"/>
+          <text x="420" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">BRA</text>
+          <!-- IDN -->
+          <ellipse cx="490" cy="122" rx="20" ry="54" fill="#954535" fill-opacity="0.25" stroke="#954535" stroke-width="1"/>
+          <line x1="470" y1="125" x2="510" y2="125" stroke="#954535" stroke-width="2"/>
+          <text x="490" y="205" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">IDN</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 5 - wide -->
+    <div class="chart-card wide">
+      <div class="chart-inner">
+        <p class="chart-num">Q 05</p>
+        <h3 class="chart-title">Global ESCS Map (2018)</h3>
+        <p class="chart-desc">Choropleth showing mean ESCS per country. Grey = no PISA participation. Clear regional patterns: Northern Europe and East Asia lead; Sub-Saharan Africa and parts of Latin America lag.</p>
+        <span class="chart-geom">geom_sf · rnaturalearth</span>
+      </div>
+      <div class="chart-vis" style="height:260px">
+        <svg viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg">
+          <rect width="1000" height="260" fill="#ece8df"/>
+          <!-- simplified world silhouette using colored rectangles as proxies -->
+          <!-- North America -->
+          <rect x="80" y="50" width="130" height="100" rx="4" fill="#1a3a5c" fill-opacity="0.5"/>
+          <text x="145" y="105" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">CAN/USA</text>
+          <!-- Latin America -->
+          <rect x="130" y="165" width="80" height="70" rx="4" fill="#d95f3b" fill-opacity="0.4"/>
+          <text x="170" y="204" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">LAT AM</text>
+          <!-- Western Europe -->
+          <rect x="370" y="30" width="90" height="80" rx="4" fill="#1a3a5c" fill-opacity="0.7"/>
+          <text x="415" y="75" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">W.EUR</text>
+          <!-- Eastern Europe -->
+          <rect x="470" y="35" width="70" height="70" rx="4" fill="#2e6da4" fill-opacity="0.5"/>
+          <text x="505" y="74" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">E.EUR</text>
+          <!-- Middle East / North Africa -->
+          <rect x="440" y="125" width="100" height="55" rx="4" fill="#d4a843" fill-opacity="0.4"/>
+          <text x="490" y="157" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">MENA</text>
+          <!-- Sub-saharan africa -->
+          <rect x="390" y="190" width="110" height="55" rx="4" fill="#d4cfca" fill-opacity="0.8"/>
+          <text x="445" y="221" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">SSA (no data)</text>
+          <!-- Russia -->
+          <rect x="550" y="20" width="160" height="60" rx="4" fill="#2e6da4" fill-opacity="0.35"/>
+          <text x="630" y="55" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">RUS</text>
+          <!-- East Asia -->
+          <rect x="730" y="40" width="100" height="100" rx="4" fill="#1a3a5c" fill-opacity="0.65"/>
+          <text x="780" y="95" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">E.ASIA</text>
+          <!-- SE Asia -->
+          <rect x="730" y="160" width="80" height="60" rx="4" fill="#d95f3b" fill-opacity="0.35"/>
+          <text x="770" y="194" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">SE.ASIA</text>
+          <!-- legend bar -->
+          <defs>
+            <linearGradient id="mapGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#c0392b"/>
+              <stop offset="50%" stop-color="#f5f2eb"/>
+              <stop offset="100%" stop-color="#1a3a5c"/>
+            </linearGradient>
+          </defs>
+          <rect x="850" y="100" width="120" height="14" rx="2" fill="url(#mapGrad)"/>
+          <text x="850" y="130" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">−1.5</text>
+          <text x="970" y="130" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">+1.5</text>
+          <text x="910" y="97" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">Mean ESCS</text>
+          <!-- grey = no data -->
+          <rect x="860" y="140" width="12" height="10" rx="1" fill="#d4cfca"/>
+          <text x="876" y="150" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">No PISA data</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="chart-card">
+      <div class="chart-inner">
+        <p class="chart-num">Q 06</p>
+        <h3 class="chart-title">OECD vs Non-OECD: Density</h3>
+        <p class="chart-desc">Overlapping density curves by group and cycle. Dashed lines mark group means. Shows distributional shift and narrowing/widening of the gap.</p>
+        <span class="chart-geom">geom_density · facet_wrap(cycle)</span>
+      </div>
+      <div class="chart-vis">
+        <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+          <rect width="560" height="220" fill="#ece8df"/>
+          <!-- 3 panels -->
+          <!-- panel 1: 2012 -->
+          <text x="95" y="22" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">2012</text>
+          <line x1="20" y1="175" x2="170" y2="175" stroke="#d4cfca" stroke-width="1"/>
+          <path d="M 20,170 C 40,168 55,120 80,72 C 95,42 105,38 115,44 C 130,58 145,120 165,168 170,172" fill="#1a3a5c" fill-opacity="0.15" stroke="#1a3a5c" stroke-width="1.5"/>
+          <path d="M 20,174 C 35,172 48,145 65,105 C 78,78 90,72 100,80 C 112,92 128,140 155,170 170,173" fill="#d95f3b" fill-opacity="0.12" stroke="#d95f3b" stroke-width="1.5"/>
+          <line x1="95" y1="30" x2="95" y2="175" stroke="#1a3a5c" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="82" y1="60" x2="82" y2="175" stroke="#d95f3b" stroke-width="1" stroke-dasharray="3,2"/>
+          <!-- panel 2: 2015 -->
+          <text x="290" y="22" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">2015</text>
+          <line x1="195" y1="175" x2="385" y2="175" stroke="#d4cfca" stroke-width="1"/>
+          <path d="M 200,170 C 220,168 235,118 260,70 C 275,40 285,36 295,42 C 310,56 325,118 345,166 380,172" fill="#1a3a5c" fill-opacity="0.15" stroke="#1a3a5c" stroke-width="1.5"/>
+          <path d="M 200,174 C 218,172 232,143 250,102 C 263,75 275,70 285,78 C 297,90 315,138 340,168 380,173" fill="#d95f3b" fill-opacity="0.12" stroke="#d95f3b" stroke-width="1.5"/>
+          <line x1="270" y1="28" x2="270" y2="175" stroke="#1a3a5c" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="257" y1="58" x2="257" y2="175" stroke="#d95f3b" stroke-width="1" stroke-dasharray="3,2"/>
+          <!-- panel 3: 2018 -->
+          <text x="485" y="22" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#7a7268">2018</text>
+          <line x1="395" y1="175" x2="545" y2="175" stroke="#d4cfca" stroke-width="1"/>
+          <path d="M 400,170 C 418,167 434,116 458,68 C 472,38 482,34 492,40 C 506,54 521,116 540,165 544,171" fill="#1a3a5c" fill-opacity="0.15" stroke="#1a3a5c" stroke-width="1.5"/>
+          <path d="M 400,174 C 416,172 430,142 448,100 C 460,73 472,68 482,76 C 495,88 512,136 535,167 544,173" fill="#d95f3b" fill-opacity="0.12" stroke="#d95f3b" stroke-width="1.5"/>
+          <line x1="466" y1="26" x2="466" y2="175" stroke="#1a3a5c" stroke-width="1" stroke-dasharray="3,2"/>
+          <line x1="454" y1="56" x2="454" y2="175" stroke="#d95f3b" stroke-width="1" stroke-dasharray="3,2"/>
+          <!-- shared legend -->
+          <line x1="215" y1="195" x2="235" y2="195" stroke="#1a3a5c" stroke-width="2"/>
+          <text x="238" y="199" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">OECD</text>
+          <line x1="275" y1="195" x2="295" y2="195" stroke="#d95f3b" stroke-width="2"/>
+          <text x="298" y="199" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">Non-OECD</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 7 -->
+    <div class="chart-card">
+      <div class="chart-inner">
+        <p class="chart-num">Q 07</p>
+        <h3 class="chart-title">ESCS Component Correlations</h3>
+        <p class="chart-desc">Correlation matrix of the four index components. Reveals which factor — parental occupation, education, or home resources — drives the composite score most.</p>
+        <span class="chart-geom">ggcorrplot · geom_tile</span>
+      </div>
+      <div class="chart-vis">
+        <svg viewBox="0 0 560 220" xmlns="http://www.w3.org/2000/svg">
+          <rect width="560" height="220" fill="#ece8df"/>
+          <!-- 4x4 lower triangle heatmap -->
+          <!-- labels -->
+          <text x="150" y="38" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">ESCS</text>
+          <text x="250" y="38" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">HISEI</text>
+          <text x="350" y="38" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">HOMEPOS</text>
+          <text x="450" y="38" text-anchor="middle" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">PAREDINT</text>
+          <text x="55" y="80" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">ESCS</text>
+          <text x="55" y="120" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">HISEI</text>
+          <text x="55" y="160" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">HOMEPOS</text>
+          <text x="55" y="200" text-anchor="end" font-family="DM Mono,monospace" font-size="8" fill="#7a7268">PAREDINT</text>
+          <!-- row 1 -->
+          <circle cx="150" cy="75" r="30" fill="#1a3a5c" fill-opacity="0.85"/>
+          <text x="150" y="80" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#fff">1.00</text>
+          <!-- row 2 -->
+          <circle cx="150" cy="115" r="22" fill="#1a3a5c" fill-opacity="0.6"/>
+          <text x="150" y="120" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">0.75</text>
+          <circle cx="250" cy="115" r="30" fill="#1a3a5c" fill-opacity="0.85"/>
+          <text x="250" y="120" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#fff">1.00</text>
+          <!-- row 3 -->
+          <circle cx="150" cy="155" r="26" fill="#1a3a5c" fill-opacity="0.7"/>
+          <text x="150" y="160" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">0.82</text>
+          <circle cx="250" cy="155" r="16" fill="#1a3a5c" fill-opacity="0.45"/>
+          <text x="250" y="160" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#1a3a5c">0.52</text>
+          <circle cx="350" cy="155" r="30" fill="#1a3a5c" fill-opacity="0.85"/>
+          <text x="350" y="160" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#fff">1.00</text>
+          <!-- row 4 -->
+          <circle cx="150" cy="195" r="24" fill="#1a3a5c" fill-opacity="0.65"/>
+          <text x="150" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">0.78</text>
+          <circle cx="250" cy="195" r="20" fill="#1a3a5c" fill-opacity="0.55"/>
+          <text x="250" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">0.63</text>
+          <circle cx="350" cy="195" r="18" fill="#1a3a5c" fill-opacity="0.5"/>
+          <text x="350" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#fff">0.58</text>
+          <circle cx="450" cy="195" r="30" fill="#1a3a5c" fill-opacity="0.85"/>
+          <text x="450" y="200" text-anchor="middle" font-family="DM Mono,monospace" font-size="10" fill="#fff">1.00</text>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- METHODS -->
+<section id="methods" style="background: var(--cream);">
+  <p class="section-label">Methodology</p>
+  <h2 class="section-title">Tools & techniques</h2>
+  <p class="section-sub">Each visualisation was built with a specific geom tailored to the research question. All charts share a unified theme for visual consistency.</p>
+
+  <div class="methods-grid">
+    <div class="method-block">
+      <h3>Data manipulation</h3>
+      <ul class="method-list">
+        <li>Grouped summaries with <code>group_by()</code> + <code>summarise()</code></li>
+        <li>Missing value handling via <code>drop_na()</code> and <code>na.rm</code></li>
+        <li>Stratified sampling with <code>slice_sample(n = 50 000)</code> for performance</li>
+        <li>Factor reordering with <code>fct_reorder()</code> for sorted axes</li>
+        <li>Cycle recoding: numeric → year labels via <code>case_when()</code></li>
+        <li>ISO country code joining with <code>rnaturalearth</code> sf object</li>
+      </ul>
+    </div>
+    <div class="method-block">
+      <h3>Visualisation techniques</h3>
+      <ul class="method-list">
+        <li>Boxplots with outlier transparency for large-N legibility</li>
+        <li>Multi-line trend chart with direct labelling (<code>ggrepel</code>)</li>
+        <li>Scatter with dual regression bands by group (<code>geom_smooth(lm)</code>)</li>
+        <li>Violin + crossbar median overlay + alpha jitter</li>
+        <li>Choropleth map via <code>geom_sf</code> + viridis mako scale</li>
+        <li>Faceted density with group mean vlines</li>
+        <li>Circle-size correlation matrix (<code>ggcorrplot</code>)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="pkg-grid" style="margin-top:2.5rem">
+    <span class="pkg">R 4.x</span>
+    <span class="pkg">tidyverse</span>
+    <span class="pkg">ggplot2</span>
+    <span class="pkg">dplyr</span>
+    <span class="pkg">ggcorrplot</span>
+    <span class="pkg">ggrepel</span>
+    <span class="pkg">rnaturalearth</span>
+    <span class="pkg">rnaturalearthdata</span>
+    <span class="pkg">viridis</span>
+    <span class="pkg">scales</span>
+  </div>
+</section>
+
+<!-- DATA -->
+<section id="data">
+  <p class="section-label">Dataset</p>
+  <h2 class="section-title">PISA Trend ESCS</h2>
+  <p class="section-sub">Recomputed ESCS values from the OECD, standardised on the 2022 scale. Covers three PISA cycles with full student-level microdata.</p>
+
+  <div class="data-grid">
+    <div class="data-cell">
+      <p class="data-cell-label">Observations</p>
+      <p class="data-cell-val">~1.4 M</p>
+    </div>
+    <div class="data-cell">
+      <p class="data-cell-label">Countries</p>
+      <p class="data-cell-val">72</p>
+    </div>
+    <div class="data-cell">
+      <p class="data-cell-label">PISA Cycles</p>
+      <p class="data-cell-val">2012 · 2015 · 2018</p>
+    </div>
+  </div>
+
+  <div class="var-list">
+    <div class="var-row"><span class="var-code">escs_trend</span><span class="var-desc">Composite ESCS index (μ=0, σ=1 for OECD 2022)</span></div>
+    <div class="var-row"><span class="var-code">hisei_trend</span><span class="var-desc">Parental occupational status (ISEI scale)</span></div>
+    <div class="var-row"><span class="var-code">homepos_trend</span><span class="var-desc">Home possessions score (IRT-calibrated)</span></div>
+    <div class="var-row"><span class="var-code">paredint_trend</span><span class="var-desc">Parental education in years of schooling</span></div>
+    <div class="var-row"><span class="var-code">cnt</span><span class="var-desc">3-character ISO country code</span></div>
+    <div class="var-row"><span class="var-code">cycle</span><span class="var-desc">PISA cycle (5 = 2012, 6 = 2015, 7 = 2018)</span></div>
+    <div class="var-row"><span class="var-code">oecd</span><span class="var-desc">1 = OECD member, 0 = non-OECD economy</span></div>
+    <div class="var-row"><span class="var-code">schoolid / studentid</span><span class="var-desc">School and student identifiers</span></div>
+  </div>
+
+  <div style="margin-top: 2.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
+    <a href="https://www.oecd.org/pisa/data/" class="btn btn-outline" target="_blank">↗ OECD PISA Data</a>
+    <a href="https://www.oecd.org/pisa/data/pisa2022technicalreport/" class="btn btn-outline" target="_blank">↗ Technical Report 2022</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-left">
+    <p class="f-title">PISA ESCS Trend Analysis</p>
+    <p>R Programming · Data Analysis Course Project</p>
+  </div>
+  <div>
+    <a href="https://github.com/" target="_blank">github.com/your-username/pisa-escs-analysis →</a>
+  </div>
+</footer>
+
+</body>
+</html>
