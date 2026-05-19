@@ -1,14 +1,8 @@
-# ============================================================
-#  PISA ESCS Trend — 7 графіків
-#  Дані: escs_trend.csv (ОЕСР, цикли 2012 / 2015 / 2018)
-# ============================================================
-
 library(tidyverse)
 library(ggcorrplot)
 library(rnaturalearth)
 library(rnaturalearthdata)
 
-# ── Завантаження даних ───────────────────────────────────────
 df <- read_csv("escs_trend.csv", na = c(".", "", "NA")) %>%
   mutate(
     cycle_year = case_when(
@@ -19,7 +13,7 @@ df <- read_csv("escs_trend.csv", na = c(".", "", "NA")) %>%
     oecd_label = if_else(oecd == 1, "OECD", "Non-OECD")
   )
 
-# Агреговані дані по країнах і циклах (для більшості графіків)
+
 df_country <- df %>%
   group_by(cnt, cycle_year, oecd_label) %>%
   summarise(
@@ -30,7 +24,7 @@ df_country <- df %>%
     .groups = "drop"
   )
 
-# Загальний стиль для всіх графіків
+
 theme_pisa <- theme_minimal(base_size = 13) +
   theme(
     plot.title    = element_text(face = "bold", size = 14, margin = margin(b = 6)),
@@ -43,11 +37,12 @@ theme_pisa <- theme_minimal(base_size = 13) +
 caption_src <- "Джерело: OECD PISA Trend ESCS, цикли 2012–2018"
 
 
-# ── 1. Boxplot: розподіл ESCS по країнах ─────────────────────
-# Вибираємо 16 країн з різних регіонів для читабельності
 countries_box <- c("FIN", "EST", "POL", "DEU", "FRA", "GBR",
                    "USA", "CAN", "JPN", "KOR", "CHN", "SGP",
                    "BRA", "MEX", "TUR", "IDN")
+
+
+# 1
 
 p1 <- df %>%
   filter(cnt %in% countries_box) %>%
@@ -68,8 +63,8 @@ p1 <- df %>%
 print(p1)
 
 
-# ── 2. Лінійний графік: динаміка ESCS 2012–2018 ──────────────
-# Топ-5 і боттом-5 за середнім ESCS у 2018
+# 2
+
 top_bottom <- df_country %>%
   filter(cycle_year == 2018) %>%
   arrange(escs_mean) %>%
@@ -100,8 +95,8 @@ p2 <- df_country %>%
 print(p2)
 
 
-# ── 3. Scatter: ESCS vs освіта батьків ───────────────────────
-# Агреговані по країнах (1 точка = 1 країна × 1 цикл)
+#  3
+
 p3 <- df_country %>%
   ggplot(aes(x = paredint_mean, y = escs_mean,
              color = oecd_label, label = cnt)) +
@@ -125,14 +120,14 @@ p3 <- df_country %>%
   ) +
   theme_pisa
 
-# Увага: потрібен пакет ggrepel (install.packages("ggrepel"))
-print(p3)
 
 
-# ── 4. Violin + jitter: нерівність всередині країн ───────────
+
+#  4
+
 countries_violin <- c("FIN", "EST", "KOR", "POL", "BRA", "MEX", "TUR", "IDN")
 
-# Для violin беремо лише 2018 щоб не перевантажувати
+
 p4 <- df %>%
   filter(cnt %in% countries_violin, cycle_year == 2018) %>%
   mutate(cnt = fct_reorder(cnt, escs_trend, median, na.rm = TRUE)) %>%
@@ -153,10 +148,11 @@ p4 <- df %>%
 print(p4)
 
 
-# ── 5. Карта світу: середній ESCS ────────────────────────────
+# 5
+
 world <- ne_countries(scale = "medium", returnclass = "sf")
 
-# Коди в rnaturalearth — ISO a3, збігаються з cnt
+
 map_data <- df_country %>%
   filter(cycle_year == 2018) %>%
   select(cnt, escs_mean)
@@ -187,7 +183,8 @@ p5 <- ggplot(world_joined) +
 print(p5)
 
 
-# ── 6. Density: OECD vs Non-OECD ─────────────────────────────
+# 6
+
 p6 <- df %>%
   filter(!is.na(escs_trend)) %>%
   ggplot(aes(x = escs_trend, fill = oecd_label, color = oecd_label)) +
@@ -214,7 +211,8 @@ p6 <- df %>%
 print(p6)
 
 
-# ── 7. Heatmap кореляцій між компонентами ESCS ───────────────
+# 7
+
 cor_data <- df %>%
   select(escs_trend, hisei_trend, homepos_trend, paredint_trend) %>%
   drop_na() %>%
@@ -222,7 +220,6 @@ cor_data <- df %>%
   slice_sample(n = 50000) %>%
   cor()
 
-# Красиві підписи
 rownames(cor_data) <- colnames(cor_data) <-
   c("ESCS (загальний)", "HISEI\n(профес. статус батьків)",
     "HOMEPOS\n(ресурси вдома)", "PAREDINT\n(освіта батьків)")
@@ -243,21 +240,3 @@ p7 <- ggcorrplot(
         axis.text.y = element_text(size = 9))
 
 print(p7)
-
-
-# ── Збереження всіх графіків в один PDF ──────────────────────
-# Розкоментуйте якщо хочете зберегти файл:
-#
-# pdf("pisa_escs_plots.pdf", width = 10, height = 7)
-# print(p1); print(p2); print(p3); print(p4)
-# print(p5); print(p6); print(p7)
-# dev.off()
-#
-# Або окремі PNG:
-# ggsave("plot1_boxplot.png",  p1, width = 10, height = 6, dpi = 150)
-# ggsave("plot2_trend.png",    p2, width = 10, height = 6, dpi = 150)
-# ggsave("plot3_scatter.png",  p3, width = 10, height = 7, dpi = 150)
-# ggsave("plot4_violin.png",   p4, width = 10, height = 6, dpi = 150)
-# ggsave("plot5_map.png",      p5, width = 12, height = 6, dpi = 150)
-# ggsave("plot6_density.png",  p6, width = 12, height = 5, dpi = 150)
-# ggsave("plot7_corrplot.png", p7, width = 8,  height = 7, dpi = 150)
